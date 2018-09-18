@@ -1,19 +1,35 @@
 # -*- coding: utf-8 -*-
-
-
-
+ 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
 import settings
+import re
 import ephem
-import datetime
-
+ 
 
 root_logger= logging.getLogger()
 root_logger.setLevel(logging.INFO)
-handler = logging.FileHandler('bot_astro.log', 'w', 'utf-8')
+handler = logging.FileHandler('bot_full_moon.log', 'w', 'utf-8')
 handler.setFormatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 root_logger.addHandler(handler)
+ 
+
+def get_date(text):
+    if re.match(r"Когда ближайшее полнолуние после \d{4}-\d{2}-\d{2}\?", text):
+        text_list = text.strip().split()
+        date = text_list[-1].replace('?', '').split('-')
+        return "{}/{}/{}".format(date[0], date[1], date[2])
+    else:
+        raise Exception("incorrect")
+
+
+def get_full_moon(text_message):
+    try:
+        date = get_date(text_message)
+        return ephem.next_full_moon(date)
+    except Exception as err:
+        if str(err) == "incorrect":
+            return "Пиши вопрос ввиде: \"Когда ближайшее полнолуние после yyyy-mm-dd?\""
 
 
 def greet_user(bot, update):
@@ -22,36 +38,11 @@ def greet_user(bot, update):
     update.message.reply_text(greet_text)
 
 
-def get_constellation(message_text):
-    try:
-        command, planet = message_text.strip().split(' ')
-    except(ValueError):
-        return "Укажи только одну планету"
-
-    planet = planet.title()
-
-    try:
-        planet_object = getattr(ephem,planet)(datetime.datetime.now())
-    except(AttributeError):
-        return "Такой планеты нет"
-
-    return ephem.constellation(planet_object)
-
-
-def talk_to_me(bot, update):
-    user_text = "Привет {}! Ты написал {}".format(update.message.chat.username, update.message.text)
-    logging.info("User: %s, Chat id: %s, Message: %s", update.message.chat.username,
-                update.message.chat.id, update.message.text)
-    update.message.reply_text(user_text)
-
-
-def talk_constellation(bot, update):
-    constellation = get_constellation(update.message.text)
-
-    text = "{}".format(constellation)
-    logging.info("User: %s, Chat id: %s, Message: %s", update.message.chat.username,
-                update.message.chat.id, update.message.text)
-    update.message.reply_text(text)
+def talk_full_moon(bot, update):
+    answer = get_full_moon(update.message.text)
+    logging.info("User: %s, Chat id: %s, Message: %s, Answer: %s", update.message.chat.username,
+                update.message.chat.id, update.message.text, answer)
+    update.message.reply_text(answer)
 
 
 def main():
@@ -61,12 +52,11 @@ def main():
 
     dp = my_bot.dispatcher
     dp.add_handler(CommandHandler("start", greet_user))
-    dp.add_handler(MessageHandler(Filters.text, talk_to_me))
-
-    dp.add_handler(CommandHandler("planet", talk_constellation))
+    dp.add_handler(MessageHandler(Filters.text, talk_full_moon))
 
     my_bot.start_polling()
-    my_bot.idle()
 
+    my_bot.idle()
+ 
 
 main()
