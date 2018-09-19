@@ -15,6 +15,7 @@ root_logger.addHandler(handler)
  
 
 def get_date(text):
+    text = text.capitalize()
     if re.match(r"Когда ближайшее полнолуние после \d{4}-\d{2}-\d{2}\?", text):
         text_list = text.strip().split()
         date = text_list[-1].replace('?', '').split('-')
