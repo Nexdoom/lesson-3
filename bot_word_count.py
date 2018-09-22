@@ -28,10 +28,19 @@ def get_word_count(string):
         raise Exception("incorrect")
 
 
+# def get_ending_word(number):
+#     if re.match(r"(2|3|4)$", number) and not re.match(r"(12|13|14)$", number):
+#         return "слова"
+#     elif re.match(r"(1)$", number) and not re.match(r"(11)$", number):
+#         return "слово"
+#     else:
+#         return "слов"
+
+
 def get_ending_word(number):
-    if re.match(r"(2|3|4)$", number) and not re.match(r"(12|13|14)$", number):
+    if number[-1] in ["2", "3", "4"] and number[-2:] not in ["12", "13", "14"]:
         return "слова"
-    elif re.match(r"(1)$", number) and not re.match(r"(11)$", number):
+    elif number[-1] == "1" and number[-2:] != "11":
         return "слово"
     else:
         return "слов"
